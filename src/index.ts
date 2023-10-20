@@ -1,24 +1,24 @@
-import { Logging } from "@google-cloud/logging";
 import express from "express";
-import env from "./env";
 
-const port = 3000;
+import env from "./env";
+import { attachLogger } from "./helpers";
+import Logger from "./log";
 
 const app = express();
 
-app.get("/", (_, res) => {
+app.use(attachLogger);
+
+app.get("/", (req, res) => {
+  const logger = new Logger({ user_id: "1234" });
+  const query = req.query;
+  logger.log(`welcome`);
+
+  // @ts-ignore
+  req.logger.log(`info`, { query });
+
   res.send("Hello World!");
 });
 
-app.listen(port, async () => {
-  const logging = new Logging({
-    keyFilename: env.keyFilename,
-  });
-
-  await logging.setProjectId(env.projectId);
-  const log = logging.log("my-log");
-  const entry = logging.entry({ resource: { type: "global" } });
-  log.write(entry);
-
-  console.log(`Example app listening on port ${port}`);
+app.listen(env.port, async () => {
+  console.log(`Example app listening on port ${env.port}`);
 });
